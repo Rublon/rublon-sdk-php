@@ -6,8 +6,8 @@
     "homepage": "https://github.com/Rublon/rublon-sdk-php",
 	"authors": [
 		 {
-			 "name": “Rublon",
-			 "email": “hello@rublon.com",
+			"name": "Rublon",
+			"email": "hello@rublon.com"
 		 }
     ],
     "require": {
