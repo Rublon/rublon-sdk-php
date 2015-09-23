@@ -69,27 +69,7 @@ e.g. with a username and password.
 It is a necessary step, because upon Rublon's initialization the service
 must receive certain information about the user:
 
-- a unique Id, stored in the system (
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- inafter called
-**the integrated system**) implementing the Rublon service,
+- a unique Id, stored in the system (inafter called **the integrated system**) implementing the Rublon service,
 - the user's email address.
 
 To experience the full measure of two-factor authentication, the end-user
