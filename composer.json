@@ -1,5 +1,5 @@
 {
-    "name": "Rublon/rublon-sdk-php",
+    "name": "rublon/rublon-sdk-php",
     "type": "library",
     "description": "Instant account security with effortless, email-based two-factor authentication; optional mobile app for more security; no tokens",
     "keywords": ["2 factor authentication", "2 step authentication", "2-Factor", "2-step verification", "2FA", "admin", "authentication", "cell phone", "javascript", "login", "login approval", "login protection", "login verification", "mfa", "mobile", "mobile phone", "multi factor authentication", "password", "qr code", "security", "smartphone", "two step authentication", "two-factor", "two-factor authentication", "two-factor verification", "two-step verification"],
