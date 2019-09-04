@@ -4,14 +4,19 @@
     "description": "Instant account security with effortless, email-based two-factor authentication; optional mobile app for more security; no tokens",
     "keywords": ["2 factor authentication", "2 step authentication", "2-Factor", "2-step verification", "2FA", "admin", "authentication", "cell phone", "javascript", "login", "login approval", "login protection", "login verification", "mfa", "mobile", "mobile phone", "multi factor authentication", "password", "qr code", "security", "smartphone", "two step authentication", "two-factor", "two-factor authentication", "two-factor verification", "two-step verification"],
     "homepage": "https://github.com/Rublon/rublon-sdk-php",
-	"authors": [
-		 {
-			"name": "Rublon",
-			"email": "hello@rublon.com"
-		 }
+    "authors": [
+        {
+            "name": "Rublon",
+            "email": "hello@rublon.com"
+        }
     ],
     "require": {
         "php": ">=5.3.0",
-		"lib-curl": "*"
+        "lib-curl": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rublon\\": "Rublon/"
+        }
     }
 }
