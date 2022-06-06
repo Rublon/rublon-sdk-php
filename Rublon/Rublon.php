@@ -101,34 +101,30 @@ class Rublon extends RublonConsumer
      * must be provided to the constructor. If not, function will trigger an E_USER_ERROR.
      *
      * @param string $callbackUrl Callback URL address.
-     * @param string $appUserId User's ID in local system.
+     * @param string $username User's username in local system.
      * @param string $userEmail User's email address.
-     * @param array $consumerParams Custom consumer parameters array (optional).
+     * @param array $params Custom parameters array (optional).
      * @param boolean $isPasswordless param for passwordless authentication
-     * @return Ambigous <string, NULL> URL to redirect or NULL if user is not protected.
+     *
+     * @return string|null URL to redirect or NULL if user is not protected.
      * @throws RublonException
      */
-    public function auth($callbackUrl, $appUserId, $userEmail, array $consumerParams = array(), $isPasswordless = false)
+    public function auth($callbackUrl, $username, $userEmail, array $params = [], $isPasswordless = false)
     {
         $this->log(__METHOD__);
 
-        if (!$this->isConfigured()) {
+        if ( ! $this->isConfigured()) {
             trigger_error(RublonConsumer::TEMPLATE_CONFIG_ERROR, E_USER_ERROR);
             return null;
         }
 
         if ($lang = $this->getLang()) {
-            $consumerParams[RublonAuthParams::FIELD_LANG] = $lang;
+            $params[RublonAuthParams::FIELD_LANG] = $lang;
         }
 
-        try {
-            $beginTransaction = new RublonAPITransactionInit($this, $callbackUrl, $userEmail, $appUserId, $consumerParams, $isPasswordless);
-            $beginTransaction->perform();
-            return $beginTransaction->getWebURI();
-        } catch (RublonException $e) {
-            throw $e;
-        }
-
+        $beginTransaction = new RublonAPITransactionInit($this, $callbackUrl, $userEmail, $username, $params, $isPasswordless);
+        $beginTransaction->perform();
+        return $beginTransaction->getWebURI();
     }
 
     /**

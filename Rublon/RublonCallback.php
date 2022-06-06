@@ -7,7 +7,6 @@ use Rublon\Core\Api\RublonAPICredentials;
 use Rublon\Core\Exceptions\RublonCallbackException;
 use Rublon\Core\Exceptions\RublonException;
 use Rublon\Core\RublonConsumer;
-use Rublon\Core\RublonSignatureWrapper;
 
 /**
  * Class to handle the Rublon callback action.
@@ -18,37 +17,17 @@ class RublonCallback
     /**
      * State GET parameter name.
      */
-    const PARAMETER_STATE_LEGACY = 'state';
     const PARAMETER_STATE = 'rublonState';
+
     /**
      * Access token GET parameter name.
      */
-    const PARAMETER_ACCESS_TOKEN_LEGACY = 'token';
     const PARAMETER_ACCESS_TOKEN = 'rublonToken';
-    /**
-     * Custom URI param GET parameter name.
-     */
-    const PARAMETER_CUSTOM_URI_PARAM = 'custom';
 
     /**
      * Success state value.
      */
     const STATE_OK = 'ok';
-
-    /**
-     * Error state value.
-     */
-    const STATE_ERROR = 'error';
-
-    /**
-     * Logout state value.
-     */
-    const STATE_LOGOUT = 'logout';
-
-    const FIELD_LOGOUT_ACCESS_TOKEN = 'accessToken';
-    const FIELD_LOGOUT_APP_USER_ID = 'appUserId';
-    const FIELD_LOGOUT_DEVICE_ID = 'deviceId';
-
 
     /**
      * Instance of the Rublon class.
@@ -126,6 +105,7 @@ class RublonCallback
      * @param callable $cancelHandler
      *            Function to handle cancel request
      *            with argument: RublonCallback $thisInstance.
+     *
      * @throws RublonException
      *            Method may throws exception on state=error
      *            or other API request errors.
@@ -143,12 +123,6 @@ class RublonCallback
             case self::STATE_OK:
                 $this->handleStateOK();
                 break;
-            case self::STATE_ERROR:
-                throw new RublonCallbackException('Rublon error status.', RublonCallbackException::ERROR_API_ERROR);
-                break;
-            case self::STATE_LOGOUT:
-                $this->handleStateLogout();
-                break;
             default:
                 if (is_callable($cancelHandler)) {
                     call_user_func($cancelHandler, $this);
@@ -164,18 +138,24 @@ class RublonCallback
      *
      * @return string|NULL
      */
-    protected function getState()
+    protected function getState(): ?string
     {
-        if (isset($_GET[self::PARAMETER_STATE])) {
-            return $_GET[self::PARAMETER_STATE];
-        }
-        if (isset($_GET[self::PARAMETER_STATE_LEGACY])) {
-            return $_GET[self::PARAMETER_STATE_LEGACY];
-        }
+        return $_GET[self::PARAMETER_STATE] ?? null;
+    }
+
+    /**
+     * Get access token from GET parameters or NULL if not present.
+     *
+     * @return string|NULL
+     */
+    protected function getAccessToken(): ?string
+    {
+        return $_GET[self::PARAMETER_ACCESS_TOKEN] ?? null;
     }
 
     /**
      * Handle state "OK" - run authentication.
+     *
      * @throws RublonCallbackException
      */
     protected function handleStateOK()
@@ -183,98 +163,32 @@ class RublonCallback
         $this->log(__METHOD__);
 
         if ($accessToken = $this->getAccessToken()) {
-
-            try /* to connect to the Rublon API and get user's ID to authenticate */ {
+            try /* to connect to the Rublon API and get username to authenticate */ {
                 $this->credentials = $this->getRublon()->getCredentials($accessToken);
             } catch (RublonException $e) {
                 throw new RublonCallbackException("Rublon API credentials error.", RublonCallbackException::ERROR_REST_CREDENTIALS, $e);
             }
 
-            // Authenticate user:
-            $this->success($this->credentials->getAppUserId());
-
+            // Authenticate user
+            $this->success($this->credentials->getUsername());
         } else {
             throw new RublonCallbackException("Missing access token.", RublonCallbackException::ERROR_MISSING_ACCESS_TOKEN);
-        }
-
-    }
-
-
-    /* ---------------------------------------------------------------------------------------------------
-     * Helper methods
-     */
-
-    /**
-     * Get access token from GET parameters or NULL if not present.
-     *
-     * @return string|NULL
-     */
-    protected function getAccessToken()
-    {
-        if (isset($_GET[self::PARAMETER_ACCESS_TOKEN])) {
-            return $_GET[self::PARAMETER_ACCESS_TOKEN];
-        }
-        if (isset($_GET[self::PARAMETER_ACCESS_TOKEN_LEGACY])) {
-            return $_GET[self::PARAMETER_ACCESS_TOKEN_LEGACY];
         }
     }
 
     /**
      * Finalize authentication.
      *
-     * @param string $appUserId
+     * @param string $username
      * @return void
      */
-    protected function success($appUserId)
+    protected function success($username)
     {
-        if (!empty($this->successHandler) AND is_callable($this->successHandler)) {
-            call_user_func($this->successHandler, $appUserId, $this);
+        if ( ! empty($this->successHandler) && is_callable($this->successHandler)) {
+            call_user_func($this->successHandler, $username, $this);
         } else {
             trigger_error('Success handler must be a valid callback.', E_USER_ERROR);
         }
-    }
-
-    /**
-     * Handle state logout: parse input and call logout for given user.
-     */
-    protected function handleStateLogout()
-    {
-        if ($input = file_get_contents("php://input")) {
-
-            $message = RublonSignatureWrapper::parseMessage($input, $this->getRublon()->getSecretKey());
-            $requiredFields = array(self::FIELD_LOGOUT_ACCESS_TOKEN, self::FIELD_LOGOUT_APP_USER_ID, self::FIELD_LOGOUT_DEVICE_ID);
-            foreach ($requiredFields as $field) {
-                if (empty($message[$field])) {
-                    $response = array('status' => 'ERROR', 'msg' => 'Missing field.', 'field' => $field);
-                    break;
-                }
-            }
-
-            if (empty($response)) {
-                $this->handleLogout($message['appUserId'], $message['deviceId']);
-                $response = array('status' => 'OK', 'msg' => 'Success');
-            }
-
-        } else {
-            $response = array('status' => 'ERROR', 'msg' => 'Empty JSON input.');
-        }
-
-        header('content-type: application/json');
-        echo json_encode($response);
-        exit;
-    }
-
-    /**
-     * Handle logout in the local system: logout given user for given deviceId.
-     *
-     * If you want to implement this feature, please override method in a subclass.
-     *
-     * @param string $appUserId
-     * @param int $deviceId
-     */
-    protected function handleLogout($appUserId, $deviceId)
-    {
-        // to override in a subclass
     }
 
     /**
@@ -287,7 +201,7 @@ class RublonCallback
     {
         if ($credentials = $this->getCredentials()) {
             $consumerParams = $credentials->getResponse();
-            if (isset($consumerParams[RublonAPIClient::FIELD_RESULT]) AND isset($consumerParams[RublonAPIClient::FIELD_RESULT][$key])) {
+            if (isset($consumerParams[RublonAPIClient::FIELD_RESULT]) && isset($consumerParams[RublonAPIClient::FIELD_RESULT][$key])) {
                 return $consumerParams[RublonAPIClient::FIELD_RESULT][$key];
             }
         }

@@ -56,8 +56,7 @@ class RublonAPIClient {
 
 	const FIELD_ACCESS_TOKEN = 'accessToken';
 	const FIELD_SYSTEM_TOKEN = 'systemToken';
-	const FIELD_USER_EMAIL_HASH = 'userEmailHash';
-	const FIELD_APP_USER_ID = 'appUserId';
+    const FIELD_USERNAME = 'username';
 	const FIELD_CALLBACK_URL = 'callbackUrl';
 	const FIELD_STATUS = 'status';
 	const FIELD_RESULT = 'result';
@@ -96,7 +95,6 @@ class RublonAPIClient {
 	 */
 	protected $params = array();
 
-
 	protected $rawPostBody = null;
 
 	protected $rawRequestHeader = null;
@@ -127,11 +125,11 @@ class RublonAPIClient {
 	 *
 	 * @param RublonConsumer $rublon
 	 */
-	public function __construct(RublonConsumer $rublon) {
+	public function __construct(RublonConsumer $rublon)
+    {
 		$rublon->log(__METHOD__);
 		$this->rublon = $rublon;
 	}
-
 
 	/**
 	 * Perform the request.
@@ -139,7 +137,8 @@ class RublonAPIClient {
 	 * @throws RublonException
 	 * @return RublonAPIClient
 	 */
-	public function perform() {
+	public function perform()
+    {
 		$this->getRublon()->log(__METHOD__);
 
 		$this->performRequest();
@@ -151,12 +150,10 @@ class RublonAPIClient {
 		}
 
 		return $this;
-
 	}
 
-
-
-	protected function validateResponse() {
+	protected function validateResponse()
+    {
 		if ($this->responseHTTPStatusCode == 200 || $this->responseHTTPStatusCode == 400) {
 			if (!empty($this->rawResponseBody)) {
 				$this->response = json_decode($this->rawResponseBody, true);
@@ -185,8 +182,8 @@ class RublonAPIClient {
         } else throw new InvalidResponseHTTPStatusCode_RublonClientException($this, 'Invalid API response HTTP Status Code `'.$this->responseHTTPStatusCode.'`');
     }
 
-
-	protected function constructException(array $data) {
+	protected function constructException(array $data)
+    {
 		$arg = null;
 		if (!empty($data[self::FIELD_NAME])) {
 			$arg = $data[self::FIELD_NAME];
@@ -198,11 +195,12 @@ class RublonAPIClient {
         return ApiExceptionFactory::createApiException($className, $this, $arg);
 	}
 
-
-	protected function getHeader($name) {
+	protected function getHeader($name)
+    {
 		if (isset($this->responseHeaders[$name])) {
 			return $this->responseHeaders[$name];
 		}
+
 		// sometimes, somehow Rublon X-Credentials are coming with lowercase letter
         // so we must handle that situation as follow
         if (isset($this->responseHeaders[strtolower($name)])) {
@@ -210,13 +208,13 @@ class RublonAPIClient {
         }
 	}
 
-
 	/**
 	 * Perform a request and set rawResponse field.
 	 *
 	 * @throws RublonException
 	 */
-	protected function performRequest() {
+	protected function performRequest()
+    {
 		$this->getRublon()->log(__METHOD__);
 
 		if (empty($this->rawPostBody) AND !empty($this->params)) {
@@ -256,9 +254,7 @@ class RublonAPIClient {
 		}
 
 		return $this;
-
 	}
-
 
 	/**
 	 * Set parameters of the request.
@@ -266,20 +262,20 @@ class RublonAPIClient {
 	 * @param array $params
 	 * @return RublonRequest
 	 */
-	public function setRequestParams(array $params) {
+	public function setRequestParams(array $params)
+    {
 		if (!is_array($params)) $params = array();
 		$this->params = $params;
 		return $this;
 	}
 
-
-	public function addRequestParams(array $params) {
+	public function addRequestParams(array $params)
+    {
 		foreach ($params as $name => $field) {
 			$this->params[$name] = $field;
 		}
 		return $this;
 	}
-
 
 	/**
 	 * Set the URL of the request.
@@ -287,71 +283,73 @@ class RublonAPIClient {
 	 * @param string $url
 	 * @return RublonAPIClient
 	 */
-	public function setRequestURL($url) {
+	public function setRequestURL($url)
+    {
 		$this->url = $url;
 		return $this;
 	}
-
 
 	/**
 	 * Get raw response body string.
 	 *
 	 * @return string
 	 */
-	public function getRawResponseBody() {
+	public function getRawResponseBody()
+    {
 		return $this->rawResponseBody;
 	}
 
-
-	public function getRawResponseHeader() {
+	public function getRawResponseHeader()
+    {
 		return $this->rawResponseHeader;
 	}
 
-
-	public function getRawRequest() {
+	public function getRawRequest()
+    {
 		return $this->getRawRequestHeader() . $this->getRawRequestBody();
 	}
 
-
-	public function getRawRequestHeader() {
+	public function getRawRequestHeader()
+    {
 		return $this->rawRequestHeader;
 	}
 
-
-	public function getRawRequestBody() {
+	public function getRawRequestBody()
+    {
 		return $this->rawPostBody;
 	}
-
 
 	/**
 	 * Get raw response string.
 	 *
 	 * @return string
 	 */
-	public function getRawResponse() {
+	public function getRawResponse()
+    {
 		return $this->rawResponse;
 	}
-
 
 	/**
 	 * Get parsed response data.
 	 *
 	 * @return array
 	 */
-	public function getResponse() {
+	public function getResponse()
+    {
 		return $this->response;
 	}
-
 
 	/**
 	 * Perform HTTP request.
 	 *
 	 * @param string $url URL address
 	 * @param string $rawPostBody
+     *
 	 * @return string Response
 	 * @throws RublonException
 	 */
-	protected function request($url, $rawPostBody = null) {
+	protected function request($url, $rawPostBody = null)
+    {
 		$this->getRublon()->log(__METHOD__ . ' -- ' . $url);
         
 		if (!function_exists('curl_init')) {
@@ -412,40 +410,36 @@ class RublonAPIClient {
 			curl_close($ch);
 			throw new RublonClientException($this, $error .' ('. $errno .')', RublonClientException::CODE_CURL_ERROR);
 		} else {
-
 			$headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
 			$header = substr($response, 0, $headerSize);
 			$body = substr($response, $headerSize, strlen($response));
 			curl_close($ch);
 
 			return array($header, $body);
-
 		}
-
 	}
 
-
-
-	protected function validateSignature($signature, $input, $secret = null) {
+	protected function validateSignature($signature, $input, $secret = null)
+    {
 		$check = $this->signMessage($input, $secret);
 		return ($check == $signature);
 	}
 
-
-	protected function signMessage($data, $secret = null) {
+	protected function signMessage($data, $secret = null)
+    {
 		if (is_null($secret)) {
 			$secret = $this->getRublon()->getSecretKey();
 		}
 		return hash_hmac(self::HASH_ALG, $data, $secret);
 	}
 
-
 	/**
 	 * Get absolute path to the pem certificates.
 	 *
 	 * @return string
 	 */
-	protected function getCertPath() {
+	protected function getCertPath()
+    {
 		$ds = DIRECTORY_SEPARATOR;
 		$certPath = explode($ds, __FILE__);
 		array_pop($certPath);
@@ -455,14 +449,13 @@ class RublonAPIClient {
 		return $certPath;
 	}
 
-
 	/**
 	 * Get the Rublon instance.
 	 *
 	 * @return RublonConsumer
 	 */
-	public function getRublon() {
+	public function getRublon()
+    {
 		return $this->rublon;
 	}
-
 }

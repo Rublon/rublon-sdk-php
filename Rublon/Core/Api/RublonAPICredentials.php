@@ -101,13 +101,14 @@ class RublonAPICredentials extends RublonAPIClient {
 	}
 	
 	/**
-	 * Get local user's ID.
+	 * Get local username
 	 *
 	 * @return string
 	 */
-	public function getAppUserId() {
-		if (isset($this->response[self::FIELD_RESULT][self::FIELD_APP_USER_ID])) {
-			return $this->response[self::FIELD_RESULT][self::FIELD_APP_USER_ID];
+	public function getUsername()
+    {
+		if (isset($this->response[self::FIELD_RESULT][self::FIELD_USERNAME])) {
+			return $this->response[self::FIELD_RESULT][self::FIELD_USERNAME];
 		}
 	}
 	
