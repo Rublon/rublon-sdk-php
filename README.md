@@ -2,105 +2,121 @@
 
 ## Table of Contents
 
-1.  [Introduction](#intro)
-    *   [Use cases](#intro-use-cases)
-    *   [Principles of operation](#intro-how-it-works)
-    *   [First steps](#intro-first-steps)
-    *   [Examples' assumptions](#intro-examples)
-    *   [Modifying the library](#intro-mods)
-2.  [Library initialization](#initialize)
-3.  [Signing in](#auth)
-    *   [Example PHP code](#auth-example)
-4.  [Authentication finalization](#callback)
-    *   [Input params](#callback-input)
-    *   [Authentication verification](#callback-verification)
-    *   [Example PHP code](#callback-example)
-5.  [Email2FA - simplified identity verification](#email2fa)
-    *   [Principles of operation](#email2fa-how-it-works)
-    *   [Example usage](#email2fa-config)
-6.  [Passwordless Login](#pslogin)
-7.  [Changelog](#changelog)
+1. [Overview](#overview)
+2. [Use Cases](#use-cases)
+3. [Supported Authentication Methods](#auth-methods)
+4. [Before You Start](#before-start)
+    *   [Create an Application in the Rublon Admin Console](#create-app)
+    *   [Optional: Install Rublon Authenticator](#install-ra)
+5. [Configuration](#config)
+    * [INFO: Initial Assumptions](#init-assumptions)
+    * [INFO: Modifying the Library](#modifying-library)
+    * [Initialize the Library](#init-library)
+    * [Perform Authentication](#perform-auth)
+    * [Finalize Authentication](#final-auth)
+6. [Laravel Configuration](#laravel-config)
+7. [Troubleshooting](#troubleshooting)
 
-<a id="intro"></a>
-## 1\. Introduction
+<a id="overview"></a>
+## 1\. Overview
 
-The _Rublon PHP SDK_ library is a client-side implementation of the [Rublon](https://rublon.net) authentication service written in PHP, including methods for embedding the service's GUI in a HTML-based environment. It forms a convenient PHP coding language facade for the service's REST interface.
+The _Rublon PHP SDK library_ is a client-side implementation of the Rublon API written in PHP. The library includes methods for embedding the Rublon API’s GUI in an HTML-based environment. The Rublon PHP SDK forms a convenient PHP coding language facade for Rublon API’s REST interface.
 
-<a id="intro-use-cases"></a>
+<a id="use-cases"></a>
 
-### Use cases
+## 2\. Use Cases
 
-Rublon provides an additional secury layer:
+Rublon adds an extra layer of security by prompting the user to authenticate using an extra authentication method such as <a href="https://rublon.com/product/mobile-push" target="_blank">Mobile Push</a>. Even if a malicious actor compromises the user's password, the hacker would not be able to log in to the user's account because the second secure factor will thwart them.
 
-1.  **during logging in to your system**, adding a second (or additional) authentication factor,
-2.  **while conducting a security-sensitive transactions**, providing a user the means for identity confirmation before changing passwords or conducting a money transfer.
+Rublon can add an extra layer of security in the following two use cases:
 
-To be able to perform an additional authentication using Rublon, the user must first be authenticated in a different way, e.g. with a username and password. It is a necessary step, because upon Rublon's initialization the service must receive certain information about the user:
+1. **When a user signs in to a system** (after the user enters the correct password)
+2. **When a user undergoes a security-sensitive transaction** (such as changing the password or conducting a money transfer)
 
-*   a unique Id, stored in the system (hereinafter called **the integrated system**) implementing the Rublon service,
-*   the user's email address.
+When a user signs in to a system, the second authentication factor should be initiated only after:
+*   the user has successfully completed the first authentication factor (e.g., entered the correct password)
+*   the user's unique username and email address have been gathered
 
-To experience the full measure of two-factor authentication, the end-user should install the Rublon mobile app, available on all leading smartphone systems. However, having those with older phone devices in mind or those who do not want to install any additional apps on their phones, we prepared a [Email2FA process](#email2fa), which does not require using an additional device of any kind.
+<a id="auth-methods"></a>
 
-<a id="intro-how-it-works"></a>
+## 3\. Supported Authentication Methods
 
-### Principles of operation
+*   <a href="https://rublon.com/product/mobile-push" target="_blank">Mobile Push</a> - approve the authentication request by tapping a push notification displayed on the Rublon Authenticator mobile app.
+*   <a href="https://rublon.com/product/mobile-passcodes" target="_blank">Mobile Passcodes</a> (TOTP) - enter the TOTP code (Time-Based One Time Password) using the Rublon Authenticator mobile app.
+*   <a href="https://rublon.com/product/sms-passcodes" target="_blank">SMS Passcodes</a> - enter the verification code from the SMS sent to your mobile phone number.
+*   <a href="https://rublon.com/product/qr-codes" target="_blank">QR Codes</a> - scan a QR code using the Rublon Authenticator mobile app.
+*   <a href="https://rublon.com/product/email-link" target="_blank">Email Links</a> - Click the verification link sent to your email address.
 
-#### User protection
+<a id="before-start"></a>
 
-User protection is active, when a user's email address in the integrated system can be matched to a user in the Rublon service. For this purpose, the user's email is sent to Rublon servers.
+## 4\. Before You Start
 
-1.  If the email is matched to an existing Rublon account, the user's identity can be confirmed using Rublon.
-2.  Otherwise, if the user does not possess a Rublon account (the email could not be matched), Rublon will use the Email2FA process, trying to verify the user's identity by sending a confirmation email message to his email address.
+Before you start implementing the Rublon PHP SDK library into your code, you must create an application in the Rublon Admin Console. We also recommend that you install the Rublon Authenticator mobile app for Mobile Push, Mobile Passcode, and QR Code authentication methods.
 
-#### Identity confirmation
+<a id="create-app"></a>
 
-If the library finds an active user protection, a URL address pointing to Rublon servers will be generated. The user's web browser must be then redirected to that URL in order to carry out the identity confirmation.
+### Create an Application in the Rublon Admin Console
 
-If the web browser is the user's Trusted Device, the authentication will be performed automatically and invisibly. Otherwise, the user will be asked to verify his account in one of the following ways:
+1. Sign up for the Rublon Admin Console. <a href="https://rublon.com/doc/admin-console/#rublon-account-registration" target="_blank">Here’s how</a>.
+2. In the Rublon Admin Console, go to the **Applications** tab and click **Add Application**.
+3. Enter a name for your application and then set the type to **Custom integration using PHP SDK**.
+4. Click **Save** to add the new PHP SDK application in the Rublon Admin Console.
+5. Copy and save the values of **System Token** and **Secret Key**. You are going to need these values later.
 
-*   click the verification link sent to his email address,
-*   enter the TOTP code (_Time-Based One Time Password_) using the Rublon mobile app,
-*   scan a QR code using the Rublon mobile app,
-*   confirm transaction by using push notification,
-*   copy the verification code from SMS sent to his mobile number.
+<a id="install-ra"></a>
 
-#### Return to the integrated system
+### Optional: Install Rublon Authenticator
 
-After a successful authentication, the web browser will be redirected to a callback URL address, which points to the integrated system servers. The integrated system should intercept that URL, retrieve its params and finalize the authentication using this library.
+For increased security of Multi-Factor Authentication (MFA), end-users are recommended to install the <a href="https://rublon.com/product/rublon-authenticator" target="_blank">Rublon Authenticator</a> mobile app.
 
-<a id="intro-first-steps"></a>
+Download the Rublon Authenticator for:
 
-### First steps
+*   <a href="https://play.google.com/store/apps/details?id=com.rublon.authenticator&hl=en" target="_blank">Android</a>
+*   <a href="https://apps.apple.com/us/app/rublon-authenticator/id1434412791" target="_blank">iOS</a>
 
-To start using the **Rublon PHP SDK** library you should:
+After installing the mobile app, users can authenticate using the following authentication methods:
 
-*   install the Rublon mobile app on your smartphone, create a new account and confirm your email address,
-*   visit the [Rublon Admin Console](https://admin.rublon.net) and log in,
-*   go to the "Add the application" form (Applications -> Add) and fill in the required fields,
-*   copy the provided **system token** and **secret key**, which will be used to identify the integrated system and verify the authenticity and integrity of the messages exchanged with Rublon API.
+*   <a href="https://rublon.com/product/mobile-push" target="_blank">Mobile Push</a>
+*   <a href="https://rublon.com/product/mobile-passcodes" target="_blank">Mobile Passcode</a>
+*   <a href="https://rublon.com/product/qr-codes" target="_blank">QR Code</a>
 
-<a id="intro-examples"></a>
+In some cases, users may not want to install any additional apps on their phones. Also, some users own older phones that do not support modern mobile applications. These users can authenticate using one of the following authentication methods instead:
 
-### Examples' assumptions
+*   <a href="https://rublon.com/product/security-keys" target="_blank">WebAuthn/U2F Security Keys</a>
+*   <a href="https://rublon.com/product/sms-passcodes" target="_blank">SMS Passcode</a>
+*   <a href="https://rublon.com/product/email-link" target="_blank">Email Link</a>
 
-In the following examples we assume the existence of the superglobal session associative array `$_SESSION`, which has access to an object storing the currently logged in user data.
+<a id="config"></a>
 
-<a id="intro-mods"></a>
+## 5\. Configuration
 
-### Modifying the library
+Follow the steps below to configure Rublon PHP SDK.
 
-The `Rublon` class implements a few public methods, which, when needed, can be overriden with inheritance.
+<a id="init-assumptions"></a>
 
-We strongly discourage you from modifying any part of the library, as it usually leads to difficulties during future library updates. If you need to change the flow or internal structure of the `Rublon` or `RublonCallback` classes, don't hesitate to subclass them according to your needs.
+### INFO: Initial Assumptions
 
-<a id="initialize"></a>
+Let’s assume there is a superglobal session associative array `$_SESSION`. It has access to an object that stores user data of the currently logged-in user.
 
-## 2\. Library initialization
+The `$_SESSION` array will be used in PHP code examples later in this document.
 
-To initialize the library you need to instantiate a `Rublon` class object. Its constructor takes three arguments.
+<a id="modifying-library"></a>
 
-<table><caption>`Rublon` class constructor arguments</caption>
+### INFO: Modifying the Library
+
+The `Rublon` class implements a few public methods, which, when needed, can be overridden using class inheritance.
+
+We strongly discourage you from modifying any part of the library, as it usually leads to difficulties during library updates. If you need to change the flow or internal structure of the `Rublon` or `RublonCallback` classes, do not hesitate to subclass them according to your needs.
+
+<a id="init-library"></a>
+
+### Initialize the Library
+
+To initialize the Rublon PHP SDK library, you need to instantiate a `Rublon` class object. Its constructor takes three arguments.
+
+<table>
+
+<caption style="text-align: left">`Rublon` class constructor arguments</caption>
 
 <thead>
 
@@ -124,7 +140,7 @@ To initialize the library you need to instantiate a `Rublon` class object. Its c
 
 <td>string</td>
 
-<td>System token</td>
+<td>The System Token value you copied from the Rublon Admin Console.</td>
 
 </tr>
 
@@ -134,7 +150,7 @@ To initialize the library you need to instantiate a `Rublon` class object. Its c
 
 <td>string</td>
 
-<td>Secret key</td>
+<td>The Secret Key value you copied from the Rublon Admin Console.</td>
 
 </tr>
 
@@ -144,7 +160,10 @@ To initialize the library you need to instantiate a `Rublon` class object. Its c
 
 <td>string</td>
 
-<td>Rublon API Server URI</td>
+<td>Rublon API Server URI
+
+Default: https://core.rublon.net
+</td>
 
 </tr>
 
@@ -152,29 +171,25 @@ To initialize the library you need to instantiate a `Rublon` class object. Its c
 
 </table>
 
-An example of the library's initialization in PHP:
+#### Example PHP Code
 
-        require_once "libs/Rublon/Rublon.php";
+      require_once "libs/Rublon/Rublon.php";
+   
+      $rublon = new Rublon(
+         "D166A6E9996A40F0A88252432FA5E490",
+         "913eda929c96cf52141b39f5717e25",
+         "https://core.rublon.net"
+      );
 
-            $rublon = new Rublon(
-                "A69FC450848B4B94A040416DC4421523",
-                "bLS6NDP7pGjg346S4IHqTHgQQjjSLw3CyApvz5iRjYzgIPN4e9EOi1cQJLrTlvLoHY8zeqg4ILrItYidKJ6JjEUZaA6pR1tZMwSZ",
-                "https://core.rublon.net"
-            );
+<a id="perform-auth"></a>
 
-<a id="auth"></a>
+### Perform Authentication
 
-## 3\. Signing in
+The `Rublon::auth()` method uses the username to check the user's protection status and returns a URL address the user should be redirected to in their web browser.
 
-Rublon protects users during their signing in processes. Even if a someone lears the user's password with malicious intent, such a person would be unable to log in to the user's account, because a physical access to the Rublon mobile app (installed in the user's smartphone) or to his email account is needed.
+<table>
 
-Administrator can force users to authenticate using the mobile app (to avoid the Email2FA process).
-
-Authenticating a user with the second factor should be initiated, when the user has successfully passed the first factor of authentication (e.g. the valid user credentials have been provided) and the user's unique Id and email address are known.
-
-The `Rublon::auth()` method will check the user's protection status (using the email address) and return a URL address for the web browser to be redirected to (if user protection is active).
-
-<table><caption>`Rublon::auth()` method arguments</caption>
+<caption style="text-align: left">`Rublon::auth()` method arguments</caption>
 
 <thead>
 
@@ -198,17 +213,21 @@ The `Rublon::auth()` method will check the user's protection status (using the e
 
 <td>string</td>
 
-<td>The integrated system's callback URL</td>
+<td>
+The integrated system's callback URL.
+
+Rublon will redirect the user to this URL after successful authentication.
+</td>
 
 </tr>
 
 <tr>
 
-<td>`$appUserId`</td>
+<td>`$username`</td>
 
 <td>string</td>
 
-<td>The integrated system's user's unique ID, which will allow to log in the user upon successful authentication</td>
+<td>The user's username, which allows the user to sign in</td>
 
 </tr>
 
@@ -218,13 +237,13 @@ The `Rublon::auth()` method will check the user's protection status (using the e
 
 <td>string</td>
 
-<td>The user's email address in the integrated system, which will allow to check the user's protection status and match the user to a Rublon account</td>
+<td>The user's email address, which allows to check the user's protection status and match the user to a Rublon account</td>
 
 </tr>
 
 <tr>
 
-<td>`$consumerParams`</td>
+<td>`$params`</td>
 
 <td>array</td>
 
@@ -238,7 +257,7 @@ The `Rublon::auth()` method will check the user's protection status (using the e
 
 <td>boolean</td>
 
-<td>Information if it is a login attempt using passwordless method (optional)</td>
+<td>Whether the sign-in attempt is passwordless (optional and false by default)</td>
 
 </tr>
 
@@ -246,13 +265,9 @@ The `Rublon::auth()` method will check the user's protection status (using the e
 
 </table>
 
-<a id="auth-example"></a>
+#### Example PHP Code
 
-### Example PHP code
-
-An example of logging in a user on an integrated system:
-
-    /**
+        /**
          * An example method used to log the user in (integrated system's method)
          *
          * @param string $login
@@ -273,30 +288,32 @@ An example of logging in a user on an integrated system:
          * implemented for Rublon integration purposes.
          */
         function loginPostListener() {
-
             // Make sure that the user is not logged-in
             unset($_SESSION['user']);
 
             $rublon = new Rublon(
-                "A69FC450848B4B94A040416DC4421523",
-                "bLS6NDP7pGjg346S4IHqTHgQQjjSLw3CyApvz5iRjYzgIPN4e9EOi1cQJLrTlvLoHY8zeqg4ILrItYidKJ6JjEUZaA6pR1tZMwSZ",
+                "D166A6E9996A40F0A88252432FA5E490",
+                "913eda929c96cf52141b39f5717e25",
                 "https://core.rublon.net"
             );
 
             try { // Initiate a Rublon authentication transaction
-                $url = $rublon->auth(
+                $authUrl = $rublon->auth(
                     $callbackUrl = "http://example.com?rublon=callback",
-                    $_SESSION["user"]["id"], // App User ID
+                    $_SESSION["user"]["login"], // Username
                     $_SESSION["user"]["email"] // User email
                 );
 
-                if (!empty($url)) { // User protection is active
+                if (!empty($authUrl)) { // User protection is active
                     // Redirect the user's web browser to Rublon servers to verify the protection:
-                    header('Location: ' . $url);
+                    header('Location: ' . $authUrl);
                 } else {
                     // User is not protected by Rublon, so bypass the second factor.
                     header('Location: index.php');
                 }
+            } catch (UserDeniedException $e) {
+                // Access Denied
+                header('Location: ./');
             } catch (UserBypassedException $e) {
                 // User bypassed
                 header('Location: ./');
@@ -306,23 +323,21 @@ An example of logging in a user on an integrated system:
             }
         }
 
-If the user's account is protected by Rublon, calling the `Rublon::auth()` method will return a URL address pointing to Rublon servers, which the user's browser should redirect to in order to verify a Trusted Device and user identity by using Rublon mobile app or his email.
+**Note:** Make sure that your code checks that the user is not signed in. The user should be signed in only after successful Rublon authentication.
 
-Because the user's web browser will be redirected to Rublon servers in order to confirm the user's identity, the user should be logged out (if he/she was logged in before) to prevent creating a user session. Otherwise Rublon will not protect the user effectively, because returning to the integrated system before a proper Rublon authentication is performed may grant the user access to an active logged in session in the system. The user should be logged in only after a successful Rublon authentication.
+<a id="final-auth"></a>
 
-<a id="callback"></a>
+### Finalize Authentication
 
-## 4\. Authentication finalization
+After successful authentication, Rublon redirects the user to the callback URL. The callback flow continues and finalizes the authentication process.
 
-After a successful authentication, Rublon will redirect the user's browser to the callback URL. The callback flow continues the authentication process, i.e. the finalization of the authentication (logging in or identity confirmation).
+#### Input Params
 
-<a id="callback-input"></a>
+The callback URL will receive input arguments in the URL address itself (query string).
 
-### Input params
+<table>
 
-The callback URL will receive its input arguments in the URL address itself (_query string_).
-
-<table><caption>Callback URL arguments</caption>
+<caption style="text-align: left">Callback URL arguments</caption>
 
 <thead>
 
@@ -342,21 +357,21 @@ The callback URL will receive its input arguments in the URL address itself (_qu
 
 <tr>
 
-<td>`state`</td>
+<td>`rublonState`</td>
 
 <td>string</td>
 
-<td>Authentication result: `ok`, `error` or `logout`</td>
+<td>Authentication result: `ok`.</td>
 
 </tr>
 
 <tr>
 
-<td>`token`</td>
+<td>`rublonToken`</td>
 
 <td>string</td>
 
-<td>Access token (60 alphanumeric characters, upper- and lowercase), which allows authentication's verification using a background Rublon API connection</td>
+<td>Access token (60 alphanumeric characters, upper- and lowercase), which allows to verify the authentication using a background Rublon API connection</td>
 
 </tr>
 
@@ -364,23 +379,21 @@ The callback URL will receive its input arguments in the URL address itself (_qu
 
 </table>
 
-<div class="block">Notice: If the callback URL has been set to e.g. `http://example.com/auth`, the params will be appended to the URL address:
+**Note:** If the callback URL has been set to, e.g., `http://example.com/auth`, the params will be appended to the URL address:
 
-    http://example.com/auth?state=ok&token=Kmad4hAS...d
+http://example.com/auth?rublonState=ok&rublonToken=Kmad4hAS...
 
-If your callback URL should be formed differently (e.g. when using mod_rewrite), you can set the callback URL's template using the meta-tags: `%token%` and `%state%`, like so:  
+**Note:** If you want to construct the callback URL differently (e.g., by using mod_rewrite), you can set the callback URL's template using the meta-tags: `%rublonToken%` and `%rublonState%`, like so:
 
-    http://example.com/auth/%state%/%token%
+http://example.com/auth/%rublonState%/%rublonToken%
 
-</div>
+#### Handle Authentication Result
 
-<a id="callback-verification"></a>
+After the callback is invoked, you need to instantiate a `RublonCallback` class object for proper finalization of the authentication process.
 
-### Authentication verification
+<table>
 
-After the callback is invoked, for proper finalization of the authentication process you need to instantiate a `RublonCallback` class object.
-
-<table><caption>`RublonCallback` class constructor method arguments</caption>
+<caption style="text-align: left">`RublonCallback` class constructor method arguments</caption>
 
 <thead>
 
@@ -404,7 +417,7 @@ After the callback is invoked, for proper finalization of the authentication pro
 
 <td>Rublon</td>
 
-<td>An instance of the `Rublon` class.</td>
+<td>An instance of the `Rublon` class</td>
 
 </tr>
 
@@ -412,9 +425,11 @@ After the callback is invoked, for proper finalization of the authentication pro
 
 </table>
 
-Next, the `RublonCallback::call()` method should be called. It takes two arguments:
+Next, call the `RublonCallback::call()` method. It takes two arguments:
 
-<table><caption>`RublonCallback::call()` method arguments</caption>
+<table>
+
+<caption style="text-align: left">`RublonCallback::call()` method arguments</caption>
 
 <thead>
 
@@ -438,7 +453,7 @@ Next, the `RublonCallback::call()` method should be called. It takes two argumen
 
 <td>callable</td>
 
-<td>Name of a function/method, or an anonymous function/closure, which will be invoked on successful verification of the process, finalizing the authentication (logging the user in or confirming the user's identity for some operation).</td>
+<td>The name of the function/method, or an anonymous function/closure, to be invoked on successful authentication</td>
 
 </tr>
 
@@ -448,7 +463,7 @@ Next, the `RublonCallback::call()` method should be called. It takes two argumen
 
 <td>callable</td>
 
-<td>Name of a function/method, or an anonymous function/closure, which will be invoked on cancel `RublonCallback:call()` method to cancel the authentication transaction.</td>
+<td>The name of the function/method, or an anonymous function/closure, to be invoked when the callback is canceled</td>
 
 </tr>
 
@@ -456,7 +471,9 @@ Next, the `RublonCallback::call()` method should be called. It takes two argumen
 
 </table>
 
-<table><caption>Arguments of the `$successHandler` function, passed to the `RublonCallback::call()` method</caption>
+<table>
+
+<caption style="text-align: left">Arguments of the `$successHandler` function, passed to the `RublonCallback::call()` method</caption>
 
 <thead>
 
@@ -476,11 +493,11 @@ Next, the `RublonCallback::call()` method should be called. It takes two argumen
 
 <tr>
 
-<td>`$appUserId`</td>
+<td>`$username`</td>
 
 <td>string</td>
 
-<td>The user's unique ID in the integrated system, given as an argument to the `Rublon::auth()` method, whose authentication is being confirmed by Rublon</td>
+<td>The user's unique username in the integrated system, that was passed as an argument to the `Rublon::auth()` method</td>
 
 </tr>
 
@@ -498,7 +515,9 @@ Next, the `RublonCallback::call()` method should be called. It takes two argumen
 
 </table>
 
-<table><caption>Arguments of the `$cancelHandler` function, passed to the `RublonCallback::call()` method</caption>
+<table>
+
+<caption style="text-align: left">Arguments of the `$cancelHandler` function, passed to the `RublonCallback::call()` method</caption>
 
 <thead>
 
@@ -530,76 +549,139 @@ Next, the `RublonCallback::call()` method should be called. It takes two argumen
 
 </table>
 
-<a id="callback-example"></a>
+#### Example PHP Code
 
-### Example PHP code
+An example portraying how to use the `RublonCallback` class in the callback:
 
-An example of the `RublonCallback` class usage in the callback:
+      $rublon = new Rublon(
+         "D166A6E9996A40F0A88252432FA5E490",
+         "913eda929c96cf52141b39f5717e25",
+         "https://code.rublon.net"
+      );
+      
+      try {
+         $callback = new RublonCallback($rublon);
+         $callback->call(
+            $successHandler = function($username, RublonCallback $callback) {
+               // The user is finally logged in
+               $_SESSION["user"] = $username;
+            },
+            $cancelHandler = function(RublonCallback $callback) {
+               // Cancel the authentication process
+               header("Location: ./login");
+               exit;
+            }
+         );
+         
+         // The authentication process was successful, redirect to the main page:
+         header("Location: ./");
+         exit;
+      } catch (RublonException $e) {
+         // Please handle this error in the better way
+         die($e->getMessage());
+      }
 
-    $rublon = new Rublon(
-            "A69FC450848B4B94A040416DC4421523",
-            "bLS6NDP7pGjg346S4IHqTHgQQjjSLw3CyApvz5iRjYzgIPN4e9EOi1cQJLrTlvLoHY8zeqg4ILrItYidKJ6JjEUZaA6pR1tZMwSZ",
-            "https://code.rublon.net"
-        );
+<a id="laravel-config"></a>
 
-        try {
+## 6\. Laravel Configuration
+
+This Laravel configuration example uses the <a href="https://laravel.com/docs/9.x/starter-kits#laravel-breeze" target="_blank">Breeze</a> starting kit.
+
+1. After you create the application and install Breeze, you need to add Rublon PHP SDK:
+
+   `composer require Rublon/rublon-sdk-php`
+
+2. Add those to .env:
+
+   `RUBLON_TOKEN="your rublon token"`
+
+   `RUBLON_KEY="your rublon key"`
+
+   `RUBLON_URL="https://core.rublon.net"`
+
+3. Create new route for Rublon callback in routes/auth.php:
+
+   `Route::get('rublon-callback', [AuthenticatedSessionController::class, 'rublonCallback'])->name('rublon-callback');`
+
+4. Modify the store method in the controller:
+
+   `Http/Controllers/Auth/AuthenticatedSessionController.php`
+
+
+      public function store(LoginRequest $request)
+      {
+         $request->authenticate();
+   
+         $rublon = new Rublon(
+            env('RUBLON_TOKEN'),
+            env('RUBLON_KEY'),
+            env('RUBLON_URL'),
+         );
+   
+         try { // Initiate a Rublon authentication transaction
+            $url = $rublon->auth(
+               $callbackUrl = url('/rublon-callback'),
+               Auth::user()->email, // User email used as username
+               Auth::user()->email  // User email
+            );
+   
+            if (!empty($url)) {
+               Auth::logout();
+               return redirect()->away($url);
+            } else {
+               // User is not protected by Rublon, so bypass the second factor.
+               $request->session()->regenerate();
+               return redirect()->to('dashboard');
+            }
+         } catch (UserBypassedException $e) {
+            return redirect()->to('login');
+         } catch (RublonException $e) {
+            // An error occurred
+            die($e->getMessage());
+         }
+   
+         return redirect()->intended(RouteServiceProvider::HOME);
+      }
+
+5. Add a new method for Rublon callback:
+
+
+      public function rublonCallback(Request $request)
+      {
+         $rublon = new Rublon(
+            env('RUBLON_TOKEN'),
+            env('RUBLON_KEY'),
+            env('RUBLON_URL'),
+         );
+   
+         try {
             $callback = new RublonCallback($rublon);
-
+            $request->session()->regenerate();
             $callback->call(
-                $successHandler = function($appUserId, RublonCallback $callback) {
-                    // The user is finally logged in
-                    $_SESSION["user"] = $appUserId;
-                },
-                $cancelHandler = function(RublonCallback $callback) {
-                    // Cancel the authentication process
-                    header("Location: ./login");
-                    exit;
-                }
+               $successHandler = function($username, RublonCallback $callback) {
+                  $user = User::where('email', $username)->firstOrFail();
+                  Auth::login($user);
+                  if (Auth::check()) {
+                     return redirect()->to('dashboard');
+                  } else {
+                     return redirect()->to('login');
+                  }
+               },
+               $cancelHandler = function(RublonCallback $callback) {
+                  return redirect()->to('login');
+               }
             );
 
-            // The authentication process was successful, redirect to the main page:
-            header("Location: ./");
-            exit;
-        } catch (RublonException $e) {
-            // Please handle this error in the better way
+            return redirect()->to('dashboard');
+         } catch (Rublon Exception $e) {
             die($e->getMessage());
-        }
+         }
 
-<a id="email2fa"></a>
+         return redirect()->to('dashboard');
+      }
 
-## 5\. Email2FA - simplified identity verification
+<a id="troubleshooting"></a>
 
-For users of an integrated system who do not possess a Rublon account (they do not want to sign up or don't own a smartphone), Rublon provides a simplified form of two-factor identity verification. This feature employs an email message with an identity confirmation link sent to the email address of the user being authenticated, assuming that no one but that user has access to his/her email inbox.
+## 7\. Troubleshooting
 
-This feature is enabled by default. However developer can force users to authenticate using the mobile app, to avoid the Email2FA process, which can increase the security.
-
-<a id="email2fa-how-it-works"></a>
-
-### Principles of operation
-
-1.  Rublon looks for a Trusted Device, which will authenticate the user automatically.
-2.  If a Trusted Device cannot be found, Rublon will check if a user with an email address provided by the integrated system is protected by Rublon. If such a user is found, the process involves using the mobile app.
-3.  If no user is found (the user does not have a Rublon account), the Email2FA process is started.
-4.  The user will receive an email with a identity confirmation link.
-5.  After clicking the link, the user will be asked if the current browser should become a Trusted Device (signing in).
-6.  In the last step, the user will be redirected to the integrated system's [callback URL](#callback) and logged in (or the transaction initiated by the user will be confirmed).
-
-<a id="email2fa-config"></a>
-
-### Example usage
-
-The use of Email2FA is by default active and looks the same as the [Signing in process](#auth-example).
-
-<a id="pslogin"></a>
-
-## 6\. Passwordless Login
-
-Passwordless Login is a way to integrate Rublon, which allows users to log into their accounts without login and password, only by scanning QR code with the Rublon App installed on a user smartphone.
-
-<a id="changelog"></a>
-
-## 7\. Changelog
-
-### 2019-01-09 (v. 4.0)
-
-First version of the README document.
+If you encounter any issues with your Rublon integration, please contact <a href="https://rublon.com/support" target="_blank">Rublon Support</a>.
