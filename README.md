@@ -607,78 +607,76 @@ This Laravel configuration example uses the <a href="https://laravel.com/docs/9.
 
    `Http/Controllers/Auth/AuthenticatedSessionController.php`
 
-
-      public function store(LoginRequest $request)
-      {
-         $request->authenticate();
-   
-         $rublon = new Rublon(
-            env('RUBLON_TOKEN'),
-            env('RUBLON_KEY'),
-            env('RUBLON_URL'),
-         );
-   
-         try { // Initiate a Rublon authentication transaction
-            $url = $rublon->auth(
-               $callbackUrl = url('/rublon-callback'),
-               Auth::user()->email, // User email used as username
-               Auth::user()->email  // User email
+         public function store(LoginRequest $request)
+         {
+            $request->authenticate();
+      
+            $rublon = new Rublon(
+               env('RUBLON_TOKEN'),
+               env('RUBLON_KEY'),
+               env('RUBLON_URL'),
             );
-   
-            if (!empty($url)) {
-               Auth::logout();
-               return redirect()->away($url);
-            } else {
-               // User is not protected by Rublon, so bypass the second factor.
-               $request->session()->regenerate();
-               return redirect()->to('dashboard');
+      
+            try { // Initiate a Rublon authentication transaction
+               $url = $rublon->auth(
+                  $callbackUrl = url('/rublon-callback'),
+                  Auth::user()->email, // User email used as username
+                  Auth::user()->email  // User email
+               );
+      
+               if (!empty($url)) {
+                  Auth::logout();
+                  return redirect()->away($url);
+               } else {
+                  // User is not protected by Rublon, so bypass the second factor.
+                  $request->session()->regenerate();
+                  return redirect()->to('dashboard');
+               }
+            } catch (UserBypassedException $e) {
+               return redirect()->to('login');
+            } catch (RublonException $e) {
+               // An error occurred
+               die($e->getMessage());
             }
-         } catch (UserBypassedException $e) {
-            return redirect()->to('login');
-         } catch (RublonException $e) {
-            // An error occurred
-            die($e->getMessage());
+      
+            return redirect()->intended(RouteServiceProvider::HOME);
          }
-   
-         return redirect()->intended(RouteServiceProvider::HOME);
-      }
 
 5. Add a new method for Rublon callback:
 
-
-      public function rublonCallback(Request $request)
-      {
-         $rublon = new Rublon(
-            env('RUBLON_TOKEN'),
-            env('RUBLON_KEY'),
-            env('RUBLON_URL'),
-         );
-   
-         try {
-            $callback = new RublonCallback($rublon);
-            $request->session()->regenerate();
-            $callback->call(
-               $successHandler = function($username, RublonCallback $callback) {
-                  $user = User::where('email', $username)->firstOrFail();
-                  Auth::login($user);
-                  if (Auth::check()) {
-                     return redirect()->to('dashboard');
-                  } else {
+         public function rublonCallback(Request $request)
+         {
+            $rublon = new Rublon(
+               env('RUBLON_TOKEN'),
+               env('RUBLON_KEY'),
+               env('RUBLON_URL'),
+            );
+      
+            try {
+               $callback = new RublonCallback($rublon);
+               $request->session()->regenerate();
+               $callback->call(
+                  $successHandler = function($username, RublonCallback $callback) {
+                     $user = User::where('email', $username)->firstOrFail();
+                     Auth::login($user);
+                     if (Auth::check()) {
+                        return redirect()->to('dashboard');
+                     } else {
+                        return redirect()->to('login');
+                     }
+                  },
+                  $cancelHandler = function(RublonCallback $callback) {
                      return redirect()->to('login');
                   }
-               },
-               $cancelHandler = function(RublonCallback $callback) {
-                  return redirect()->to('login');
-               }
-            );
+               );
+
+               return redirect()->to('dashboard');
+            } catch (Rublon Exception $e) {
+               die($e->getMessage());
+            }
 
             return redirect()->to('dashboard');
-         } catch (Rublon Exception $e) {
-            die($e->getMessage());
          }
-
-         return redirect()->to('dashboard');
-      }
 
 <a id="troubleshooting"></a>
 
