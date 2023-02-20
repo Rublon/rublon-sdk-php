@@ -3,7 +3,11 @@
 namespace Rublon;
 
 use Rublon\Core\Api\RublonAPICredentials;
+use Rublon\Core\Api\RublonAPICheckApplication;
 use Rublon\Core\Api\RublonAPITransactionInit;
+use Rublon\Core\Exceptions\Api\ApplicationNotFoundException;
+use Rublon\Core\Exceptions\Api\InvalidSignatureException;
+use Rublon\Core\Exceptions\Api\UnsupportedVersionException;
 use Rublon\Core\Exceptions\RublonException;
 use Rublon\Core\HTML\RublonLoginBox;
 use Rublon\Core\RublonAuthParams;
