@@ -65,6 +65,8 @@ class RublonAPIClient {
 	const FIELD_NAME = 'name';
 	const FIELD_USING_EMAIL2FA = 'usingEmail2FA';
 	const FIELD_ACCESS_CONTROL_MANAGER_ALLOWED = 'accessControlManagerAllowed';
+	const FIELD_APP_VERSION = 'appVer';
+	const FIELD_PARAMS = 'params';
 
 	const STATUS_OK = 'OK';
 	const STATUS_ERROR = 'ERROR';

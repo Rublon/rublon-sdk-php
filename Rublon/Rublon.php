@@ -160,4 +160,29 @@ class Rublon extends RublonConsumer
             return $rublonLoginBox->__toString();
         }
     }
+
+    /**
+     * Initializes the Rublon
+     *
+     * @param string $appVer Version of the app
+     * @param array $params Custom parameters array (optional).
+     *
+     * @return string|null Response status.
+     * @throws RublonException
+     */
+    public function checkApplication(string $appVer, array $params = [])
+    {
+        $this->log(__METHOD__);
+
+        if ( ! $this->isConfigured()) {
+            trigger_error(RublonConsumer::TEMPLATE_CONFIG_ERROR, E_USER_ERROR);
+            return null;
+        }
+
+        $beginInit = new RublonAPICheckApplication($this, $appVer, $params);
+
+        $beginInit->perform();
+
+        return $beginInit->getResponse();
+    }
 }
