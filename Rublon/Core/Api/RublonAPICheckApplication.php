@@ -31,6 +31,12 @@ class RublonAPICheckApplication extends RublonAPIClient
 
         parent::__construct($rublon);
 
+
+        if (class_exists('\Composer\InstalledVersions')) {
+            $sdkVer = \Composer\InstalledVersions::getVersion('rublon/rublon-sdk-php');
+            $params = array_merge($params, ['sdkVer' => $sdkVer]);
+        }
+
         // Set request URL and parameters
         $url = $rublon->getAPIDomain() . $this->urlPath;
         $data = array(
