@@ -233,9 +233,9 @@ class RublonAPIClient {
 
 		$header = explode("\n", $this->rawResponseHeader);
 		$this->responseHTTPStatus = array_shift($header);
-		preg_match('/^HTTP\/\d\.\d (\d+)/', $this->responseHTTPStatus, $match);
-		if (isset($match[1])) {
-			$this->responseHTTPStatusCode = $match[1];
+		preg_match('/^HTTP\/((\d)|(\d\.\d))\s(\d+)/', $this->responseHTTPStatus, $match);
+		if (isset($match[4])) {
+			$this->responseHTTPStatusCode = $match[4];
 		}
 
 		// When preg_match pattern didn't match anything somehow
