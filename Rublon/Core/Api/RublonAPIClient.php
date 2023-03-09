@@ -65,6 +65,8 @@ class RublonAPIClient {
 	const FIELD_NAME = 'name';
 	const FIELD_USING_EMAIL2FA = 'usingEmail2FA';
 	const FIELD_ACCESS_CONTROL_MANAGER_ALLOWED = 'accessControlManagerAllowed';
+	const FIELD_APP_VERSION = 'appVer';
+	const FIELD_PARAMS = 'params';
 
 	const STATUS_OK = 'OK';
 	const STATUS_ERROR = 'ERROR';
@@ -231,9 +233,9 @@ class RublonAPIClient {
 
 		$header = explode("\n", $this->rawResponseHeader);
 		$this->responseHTTPStatus = array_shift($header);
-		preg_match('/^HTTP\/\d\.\d (\d+)/', $this->responseHTTPStatus, $match);
-		if (isset($match[1])) {
-			$this->responseHTTPStatusCode = $match[1];
+		preg_match('/^HTTP\/((\d)|(\d\.\d))\s(\d+)/', $this->responseHTTPStatus, $match);
+		if (isset($match[4])) {
+			$this->responseHTTPStatusCode = $match[4];
 		}
 
 		// When preg_match pattern didn't match anything somehow

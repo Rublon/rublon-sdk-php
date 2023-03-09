@@ -3,7 +3,11 @@
 namespace Rublon;
 
 use Rublon\Core\Api\RublonAPICredentials;
+use Rublon\Core\Api\RublonAPICheckApplication;
 use Rublon\Core\Api\RublonAPITransactionInit;
+use Rublon\Core\Exceptions\Api\ApplicationNotFoundException;
+use Rublon\Core\Exceptions\Api\InvalidSignatureException;
+use Rublon\Core\Exceptions\Api\UnsupportedVersionException;
 use Rublon\Core\Exceptions\RublonException;
 use Rublon\Core\HTML\RublonLoginBox;
 use Rublon\Core\RublonAuthParams;
@@ -159,5 +163,30 @@ class Rublon extends RublonConsumer
         if (!empty($rublonLoginBox)) {
             return $rublonLoginBox->__toString();
         }
+    }
+
+    /**
+     * Initializes the Rublon
+     *
+     * @param string $appVer Version of the app
+     * @param array $params Custom parameters array (optional).
+     *
+     * @return string|null Response status.
+     * @throws RublonException
+     */
+    public function checkApplication(string $appVer, array $params = [])
+    {
+        $this->log(__METHOD__);
+
+        if ( ! $this->isConfigured()) {
+            trigger_error(RublonConsumer::TEMPLATE_CONFIG_ERROR, E_USER_ERROR);
+            return null;
+        }
+
+        $beginInit = new RublonAPICheckApplication($this, $appVer, $params);
+
+        $beginInit->perform();
+
+        return $beginInit->getResponse();
     }
 }
