@@ -6,27 +6,28 @@
 2. [Use Cases](#use-cases)
 3. [Supported Authentication Methods](#auth-methods)
 4. [Before You Start](#before-start)
-    *   [Create an Application in the Rublon Admin Console](#create-app)
-    *   [Optional: Install Rublon Authenticator](#install-ra)
+   *   [Create an Application in the Rublon Admin Console](#create-app)
+   *   [Optional: Install Rublon Authenticator](#install-ra)
 5. [Configuration](#config)
-    * [INFO: Initial Assumptions](#init-assumptions)
-    * [INFO: Modifying the Library](#modifying-library)
-    * [Initialize the Library](#init-library)
-    * [Perform Authentication](#perform-auth)
-    * [Finalize Authentication](#final-auth)
+   * [INFO: Initial Assumptions](#init-assumptions)
+   * [INFO: Modifying the Library](#modifying-library)
+   * [Initialize the Library](#init-library)
+   * [Perform Authentication](#perform-auth)
+   * [Finalize Authentication](#final-auth)
 6. [Laravel Configuration](#laravel-config)
 7. [Troubleshooting](#troubleshooting)
 
 <a id="overview"></a>
-## 1\. Overview
+
+## Overview
 
 The _Rublon PHP SDK library_ is a client-side implementation of the Rublon API written in PHP. The library includes methods for embedding the Rublon API’s GUI in an HTML-based environment. The Rublon PHP SDK forms a convenient PHP coding language facade for Rublon API’s REST interface.
 
 <a id="use-cases"></a>
 
-## 2\. Use Cases
+## Use Cases
 
-Rublon adds an extra layer of security by prompting the user to authenticate using an extra authentication method such as <a href="https://rublon.com/product/mobile-push" target="_blank">Mobile Push</a>. Even if a malicious actor compromises the user's password, the hacker would not be able to log in to the user's account because the second secure factor will thwart them.
+Rublon adds an extra layer of security by prompting the user to authenticate using an extra authentication method such as Mobile Push. Even if a malicious actor compromises the user's password, the hacker would not be able to log in to the user's account because the second secure factor will thwart them.
 
 Rublon can add an extra layer of security in the following two use cases:
 
@@ -39,17 +40,19 @@ When a user signs in to a system, the second authentication factor should be ini
 
 <a id="auth-methods"></a>
 
-## 3\. Supported Authentication Methods
+## Supported Authentication Methods
 
-*   <a href="https://rublon.com/product/mobile-push" target="_blank">Mobile Push</a> - approve the authentication request by tapping a push notification displayed on the Rublon Authenticator mobile app.
-*   <a href="https://rublon.com/product/mobile-passcodes" target="_blank">Mobile Passcodes</a> (TOTP) - enter the TOTP code (Time-Based One Time Password) using the Rublon Authenticator mobile app.
-*   <a href="https://rublon.com/product/sms-passcodes" target="_blank">SMS Passcodes</a> - enter the verification code from the SMS sent to your mobile phone number.
-*   <a href="https://rublon.com/product/qr-codes" target="_blank">QR Codes</a> - scan a QR code using the Rublon Authenticator mobile app.
+*   <a href="https://rublon.com/product/mobile-push" target="_blank">Mobile Push</a> - Approve the authentication request by tapping a push notification displayed on the Rublon Authenticator mobile app.
+*   <a href="https://rublon.com/product/mobile-passcodes" target="_blank">Mobile Passcodes</a> (TOTP) - Enter the TOTP code (Time-Based One Time Password) using the Rublon Authenticator mobile app.
+*   <a href="https://rublon.com/product/sms-passcodes" target="_blank">SMS Passcodes</a> - Enter the verification code from the SMS sent to your mobile phone number.
+*   <a href="https://rublon.com/product/qr-codes" target="_blank">QR Codes</a> - Scan a QR code using the Rublon Authenticator mobile app.
 *   <a href="https://rublon.com/product/email-link" target="_blank">Email Links</a> - Click the verification link sent to your email address.
+*   <a href="https://rublon.com/product/security-keys/" target="_blank">WebAuthn/U2F Security Keys</a> - Insert the security key into the USB port of your computer and touch it.
+*   <a href="https://rublon.com/product/yubikey-otp/" target="_blank">YubiKey OTP</a> - Insert the YubiKey and tap it to automatically enter the OTP into the text field.
 
 <a id="before-start"></a>
 
-## 4\. Before You Start
+## Before You Start
 
 Before you start implementing the Rublon PHP SDK library into your code, you must create an application in the Rublon Admin Console. We also recommend that you install the Rublon Authenticator mobile app for Mobile Push, Mobile Passcode, and QR Code authentication methods.
 
@@ -85,10 +88,12 @@ In some cases, users may not want to install any additional apps on their phones
 *   <a href="https://rublon.com/product/security-keys" target="_blank">WebAuthn/U2F Security Keys</a>
 *   <a href="https://rublon.com/product/sms-passcodes" target="_blank">SMS Passcode</a>
 *   <a href="https://rublon.com/product/email-link" target="_blank">Email Link</a>
+*   <a href="https://rublon.com/product/security-keys/" target="_blank">WebAuthn/U2F Security Keys</a>
+*   <a href="https://rublon.com/product/yubikey-otp" target="_blank">YubiKey OTP</a>
 
 <a id="config"></a>
 
-## 5\. Configuration
+## Configuration
 
 Follow the steps below to configure Rublon PHP SDK.
 
@@ -583,7 +588,7 @@ An example portraying how to use the `RublonCallback` class in the callback:
 
 <a id="laravel-config"></a>
 
-## 6\. Laravel Configuration
+## Laravel Configuration
 
 This Laravel configuration example uses the <a href="https://laravel.com/docs/9.x/starter-kits#laravel-breeze" target="_blank">Breeze</a> starting kit.
 
@@ -680,6 +685,6 @@ This Laravel configuration example uses the <a href="https://laravel.com/docs/9.
 
 <a id="troubleshooting"></a>
 
-## 7\. Troubleshooting
+## Troubleshooting
 
 If you encounter any issues with your Rublon integration, please contact <a href="https://rublon.com/support" target="_blank">Rublon Support</a>.
