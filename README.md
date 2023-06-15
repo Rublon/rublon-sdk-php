@@ -13,6 +13,7 @@
    * [INFO: Modifying the Library](#modifying-library)
    * [Initialize the Library](#init-library)
    * [Perform Authentication](#perform-auth)
+   * [Verify Configuration](#verify-conf)
    * [Finalize Authentication](#final-auth)
 6. [Laravel Configuration](#laravel-config)
 7. [Troubleshooting](#troubleshooting)
@@ -330,7 +331,7 @@ Rublon will redirect the user to this URL after successful authentication.
 
 **Note:** Make sure that your code checks that the user is not signed in. The user should be signed in only after successful Rublon authentication.
 
-<a id="final-auth"></a>
+<a id="verify-conf"></a>
 
 ### Verify Configuration
 The `Rublon::checkApplication()` method verifies the validity of the configuration. Your application should call this method every time you change or save the configuration. A configuration change can be, for example, changing the systemToken or secretKey.
@@ -353,6 +354,7 @@ The `Rublon::checkApplication()` method verifies the validity of the configurati
 - **InvalidSignatureException** - Invalid Secret Key
 - **UnsupportedVersionException** - Incorrect version of the application
 
+<a id="final-auth"></a>
 
 ### Finalize Authentication
 
