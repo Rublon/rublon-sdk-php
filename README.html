@@ -306,6 +306,7 @@
                 <li><a href="#modifying-library">INFO: Modifying the Library</a></li>
                 <li><a href="#init-library">Initialize the Library</a></li>
                 <li><a href="#perform-auth">Perform Authentication</a></li>
+                <li><a href="#verify-conf">Verify Configuration</a></li>
                 <li><a href="#final-auth">Finalize Authentication</a></li>
             </ul>
         </li>
@@ -347,8 +348,7 @@
                 Push</a> - Approve the authentication request by tapping a push
             notification displayed on the Rublon Authenticator mobile app.</li>
         <li><a href="https://rublon.com/product/mobile-passcodes" target="_blank">Mobile
-                Passcodes</a> (TOTP) - Enter the TOTP code (Time-Based One Time
-            Password) using the Rublon Authenticator mobile app.</li>
+                Passcodes</a> (TOTP) - Enter the TOTP code (Time-Based One Time Password) using the Rublon Authenticator mobile app or a third-party authenticator app like Google Authenticator or Microsoft Authenticator.</li>
         <li><a href="https://rublon.com/product/sms-passcodes" target="_blank">SMS
                 Passcodes</a> - Enter the verification code from the SMS sent to your
             mobile phone number.</li>
@@ -519,6 +519,33 @@
          &quot;913eda929c96cf52141b39f5717e25&quot;,
          &quot;https://core.rublon.net&quot;
       );</code></pre>
+
+    <p><a id="verify-conf"></a></p>
+    <h3 id="verify-configurationn">Verify Configuration</h3>
+    <p>The <code>Rublon::checkApplication()</code> method verifies the validity of the configuration. Your application should call this method every time you change or save the configuration. A configuration change can be, for example, changing the systemToken or secretKey.</p>
+
+    <table>
+        <caption><code>Rublon::checkApplication()</code> method arguments</caption>
+        <thead><tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr></thead>
+        <tbody>
+        <tr><td><code>appVer</code></td><td>string</td><td>The version of the current application.</td></tr>
+        <tr><td><code>params</code></td><td>array</td><td>Optional.<br/></br>Additional application parameters.</td></tr>
+        </tbody>
+    </table>
+
+    <p><code>Rublon::checkApplication()</code> may throw one of the following exceptions:</p>
+    <ul>
+        <li><strong>ApplicationNotFoundException</strong> - Invalid System Token</li>
+        <li><strong>InvalidSignatureException</strong> - Invalid Secret Key</li>
+        <li><strong>UnsupportedVersionException</strong> - Incorrect version of the application</li>
+    </ul>
+
+
+
     <p><a id="perform-auth"></a></p>
     <h3 id="perform-authentication">Perform Authentication</h3>
     <p>The <code>Rublon::auth()</code> method uses the username to check the
