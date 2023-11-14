@@ -32,7 +32,7 @@ class RublonAPICheckApplication extends RublonAPIClient
         parent::__construct($rublon);
 
 
-        if (class_exists('\Composer\InstalledVersions')) {
+        if (class_exists('\Composer\InstalledVersions') && \Composer\InstalledVersions::isInstalled('rublon/rublon-sdk-php')) {
             $sdkVer = \Composer\InstalledVersions::getVersion('rublon/rublon-sdk-php');
             $params = array_merge($params, ['sdkVer' => $sdkVer]);
         }
